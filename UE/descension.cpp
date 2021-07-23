@@ -1,7 +1,5 @@
 #include "pch.h"
 
-#define TRIGGERBOT
-
 using namespace std;
 using namespace CG;
 static const DWORD64 uworld_offset = 0x5390D98;
@@ -28,14 +26,9 @@ class Timer {
     }
 
     Timer(void) {
-        // Tick();
         this->previous_tick_time_ = std::chrono::steady_clock::time_point();
         SetPeriod(1000);
     }
-
-    // Timer(float period_in_ms) : Timer() {
-    //    SetPeriod(period_in_ms);
-    //}
 
     Timer(float frequency) : Timer() {
         SetFrequency(frequency);
@@ -761,17 +754,6 @@ static struct AimbotSettings {
     bool need_line_of_sight = true;
 
     int aimbot_poll_frequency = 60 * 5;
-
-#ifdef TRIGGERBOT
-    struct TriggerbotSettings {
-        bool enabled = false;
-        bool use_for_tempest = true;
-        bool use_for_chaingun = false;
-        bool use_for_grenadelauncher = false;
-        bool use_for_blaster = true;
-        bool use_for_plasma = true;
-    } triggerbot_settings;
-#endif
 } aimbot_settings;
 
 static Timer aimbot_poll_timer(aimbot_settings.aimbot_poll_frequency);
@@ -1027,21 +1009,6 @@ bool FindTarget(void) {
     return current_target_character != NULL;
 }
 
-#ifdef TRIGGERBOT
-void SendLeftMouseClick(void) {
-    INPUT inputs[2];
-    ZeroMemory(inputs, sizeof(inputs));
-
-    inputs[0].type = INPUT_MOUSE;
-    inputs[0].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
-
-    inputs[1].type = INPUT_MOUSE;
-    inputs[1].mi.dwFlags = MOUSEEVENTF_LEFTUP;
-
-    UINT uSent = SendInput(ARRAYSIZE(inputs), inputs, sizeof(INPUT));
-}
-#endif
-
 void Tick(void) {
     if (!aimbot_settings.enabled /*|| !enabled*/ || !aimbot_poll_timer.IsReady())
         return;
@@ -1065,30 +1032,6 @@ void Tick(void) {
 
                 projections_of_predictions.push_back(projection);
                 aimbot_information.push_back({(prediction - game_data::my_player.location_).Magnitude(), projection, height});
-
-#ifdef TRIGGERBOT
-                if (aimbot_settings.triggerbot_settings.enabled && projection.X > 0 && projection.Y > 0) {
-                    bool los = game_functions::InLineOfSight(target_player.character_);
-                    if (los) {
-                        FVector2D center_projection = game_functions::Project(target_player.location_);
-                        target_player.location_.Z += esp::esp_settings.player_height;  // this is HALF the height in reality
-                        FVector2D head_projection = game_functions::Project(target_player.location_);
-                        target_player.location_.Z -= esp::esp_settings.player_height;  // this is HALF the height in reality
-                        height = abs(head_projection.Y - center_projection.Y);
-                        float width = esp::esp_settings.width_to_height_ratio * height;
-
-                        // if (imgui::visuals::aimbot_visual_settings.show_triggerbot_bounds) {
-                        //    triggerbot_esp_information.push_back({projection, height, same_team, ""});
-                        //}
-
-                        if (abs(game_data::screen_center.X - projection.X) < width && abs(game_data::screen_center.Y - projection.Y) < height) {
-                            if ((game_data::my_player.weapon_ == game_data::Weapon::disk && aimbot_settings.triggerbot_settings.use_for_tempest) || (game_data::my_player.weapon_ == game_data::Weapon::blaster && aimbot_settings.triggerbot_settings.use_for_blaster) || (game_data::my_player.weapon_ == game_data::Weapon::plasma && aimbot_settings.triggerbot_settings.use_for_plasma)) {
-                                SendLeftMouseClick();
-                            }
-                        }
-                    }
-                }
-#endif
             }
         }
     } else {
@@ -1115,30 +1058,6 @@ void Tick(void) {
 
                 projections_of_predictions.push_back(projection);
                 aimbot_information.push_back({(prediction - game_data::my_player.location_).Magnitude(), projection, height});
-
-#ifdef TRIGGERBOT
-                if (aimbot_settings.triggerbot_settings.enabled && projection.X > 0 && projection.Y > 0) {
-                    bool los = game_functions::InLineOfSight(player->character_);
-                    if (los) {
-                        FVector2D center_projection = game_functions::Project(player->location_);
-                        player->location_.Z += esp::esp_settings.player_height;  // this is HALF the height in reality
-                        FVector2D head_projection = game_functions::Project(player->location_);
-                        player->location_.Z -= esp::esp_settings.player_height;  // this is HALF the height in reality
-                        height = abs(head_projection.Y - center_projection.Y);
-                        float width = esp::esp_settings.width_to_height_ratio * height;
-
-                        // if (imgui::visuals::aimbot_visual_settings.show_triggerbot_bounds) {
-                        //    triggerbot_esp_information.push_back({projection, height, same_team, ""});
-                        //}
-
-                        if (abs(game_data::screen_center.X - projection.X) < width && abs(game_data::screen_center.Y - projection.Y) < height) {
-                            if (game_data::my_player.weapon_ == game_data::Weapon::disk || game_data::my_player.weapon_ == game_data::Weapon::gl || game_data::my_player.weapon_ == game_data::Weapon::plasma || game_data::my_player.weapon_ == game_data::Weapon::blaster) {
-                                SendLeftMouseClick();
-                            }
-                        }
-                    }
-                }
-#endif
             }
         }
     }
@@ -1346,17 +1265,6 @@ void DrawAimAssistMenuNew(void) {
 
             ImGui::Unindent();
         }
-
-#ifdef TRIGGERBOT
-        if (ImGui::CollapsingHeader("Triggerbot settings")) {
-            ImGui::Indent();
-            ImGui::Checkbox("Enabled", &aimbot::aimbot_settings.triggerbot_settings.enabled);
-            ImGui::Checkbox("Use for tempest", &aimbot::aimbot_settings.triggerbot_settings.use_for_tempest);
-            ImGui::Checkbox("Use for blaster", &aimbot::aimbot_settings.triggerbot_settings.use_for_blaster);
-            ImGui::Checkbox("Use for plasma", &aimbot::aimbot_settings.triggerbot_settings.use_for_plasma);
-            ImGui::Unindent();
-        }
-#endif
 
         if (ImGui::CollapsingHeader("Markers")) {
             float marker_preview_size = 100;
