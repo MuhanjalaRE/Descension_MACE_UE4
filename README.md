@@ -18,5 +18,7 @@ Currently undetected as there is no Anti-Cheat implemented in the current versio
 
 ## Credits
 **CorrM, dano20zombie, KN4CK3R, tamimego, TheFeckless -** For all the information and tools provided by them for reversing Unreal Engine 4.
+
 **Santeri Soininen/Voidie/Voidspawn -** For his hilariously fragile ego and kneejerk reaction to ban me because of his inability to handle criticism on his subpar art style😂.
+
 **DarkLord/DL -** For posting the source code of the projectile aim assist which I've added into/used for this hack.
